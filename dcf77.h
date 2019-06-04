@@ -22,7 +22,7 @@
 
 #define DCF77_MAJOR_VERSION 3
 #define DCF77_MINOR_VERSION 3
-#define DCF77_PATCH_VERSION 0
+#define DCF77_PATCH_VERSION 3
 
 
 #include <stdint.h>
@@ -557,8 +557,13 @@ namespace Internal {
     #endif
 
 
-    #define sprint(...)   Serial.print(__VA_ARGS__)
-    #define sprintln(...) Serial.println(__VA_ARGS__)
+    #if defined(__STM32F1__)
+        #define sprint(...)   Serial1.print(__VA_ARGS__)
+        #define sprintln(...) Serial1.println(__VA_ARGS__)
+    #else
+        #define sprint(...)   Serial.print(__VA_ARGS__)
+        #define sprintln(...) Serial.println(__VA_ARGS__)
+    #endif
 
     namespace Binning {
         template <typename uint_t>
@@ -2115,9 +2120,6 @@ namespace Internal {
                 now.year    = Year_Decoder.get_time_value();
 
                 BCD::bcd_t weekday = now.get_bcd_weekday();
-                if (weekday.val == 0) {
-                    weekday.val = 7;
-                }
                 if (now.weekday.val == weekday.val) {
                     date_quality_factor += 1;
                 } else if (date_quality_factor <= weekday_quality_factor) {
@@ -2223,6 +2225,7 @@ namespace Internal {
             Demodulator.setup();
             phase_lost_event_handler();
             Frequency_Control::setup();
+            Local_Clock.setup();
         }
 
         static void debug() {
